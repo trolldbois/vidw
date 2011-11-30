@@ -1,0 +1,84 @@
+#~DamnVid-module:videobb
+import time
+
+class DamnModule_VideoBB(DamnVideoModule):
+  def __init__(self,uri):
+    DamnVideoModule.__init__(self,uri)
+    self.name='videobb'
+    self.regex={
+      'url':re.compile('http://www.videobb.com/video/(\w+)',re.IGNORECASE),
+      'title':re.compile('<title>.*\s+-\s+([^"<>]+)</title>',re.IGNORECASE),
+    }
+    self.valid=self.regex['url'].search(uri)
+    if self.valid: # See?
+      self.id=self.valid.group(1) # Set unique ID.
+      self.link='http://www.videobb.com/watch_video.php?v=%s'%(self.id )
+      #self.ticket='http://s197.videobb.com/s?v=%s&t=%d&u=&start=0'%(self.valid.group(1), time.time())
+
+  def renewTicket(self): # renewTicket function, called by getDownload
+    self.newTicket('http://s197.videobb.com/s?v=%s&t=%d&u=&start=0'%(self.id, time.time()) )
+
+  def getTitle(self): # This function returns the video title. If your title regex is defined and can grab the video title from the self.link page, you shouldn't have to override this unless you want to grab additional information from the page at the same time.
+      if self.title is None: # If the title hasn't been figured out yet...
+          html=urllib2.urlopen(self.link) # Open self.link, grab the page, store it in total
+          total=''
+          for i in html:
+              total+=i
+          res=self.regex['title'].search(total) # Find matches with the 'title' regex
+          if res: # If there was a match
+              self.title=DamnHtmlEntities(res.group(1)) # Set title
+      if self.title is not None: # If title has been set
+          return self.title # Return it
+      return u'Unknown title' # Else return generic title
+
+DamnRegisterModule({
+  'name':'videobb',
+  'title':'VideoBB',
+  'type':'video',
+  'version':'1.0',
+  'minversion':'1.0',
+  'author':{
+    'name':'trolldbois',
+    'email':'trolldbois@yahoo.fr',
+    'url':'http://example.org/'
+  },
+  'icon':{
+    'small':'videobb.png',
+    'large':'videobb-large.png',
+  },
+  'about':{
+    'short':'DamnVid module for Videobb.',
+    'long':"""This is a video plugin for DamnVid that adds VideoBB video downloading capabilities.""",
+    'url':'http://code.google.com/p/damnvid/wiki/Modules'
+  },
+  'sites':[
+    {
+      'title':'VideoBB',
+      'icon':'videobb.png',
+      'url':'http://www.videobb.com/'
+    }
+  ],
+  'class':DamnModule_VideoBB,
+  'preferences':{
+    'profile':{
+      'name':'Default profile',
+      'type':DV.preference_type_profile,
+      'kind':'profile',
+      'strict':True,
+      'default':-1
+    },
+    'outdir':{
+      'name':'Output directory',
+      'type':DV.preference_type_misc,
+      'kind':'dir',
+      'strict':True,
+      'default':'?DAMNVID_MY_VIDEOS?/DamnVid/'
+    }
+  },
+  'register':{
+    'listicons':{
+      'videobb':'videobb.png'
+    }
+  }
+})
+
